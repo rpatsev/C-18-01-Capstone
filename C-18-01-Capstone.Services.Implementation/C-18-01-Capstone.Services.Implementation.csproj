@@ -41,6 +41,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\EncryptionService.cs" />
+    <Compile Include="Services\UserService.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\C-18-01-Capstone.Main\C-18-01-Capstone.Main.csproj">
+      <Project>{4DCDE8F6-8AD2-4F36-A0A5-584C9B68DC1F}</Project>
+      <Name>C-18-01-Capstone.Main</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\C-18-01-Capstone.Services\C-18-01-Capstone.Services.csproj">
+      <Project>{77A6DDD8-C0F3-4E73-AAC1-EA10A553228F}</Project>
+      <Name>C-18-01-Capstone.Services</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
