@@ -32,23 +32,17 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Services\CountryModel.cs" />
+    <Compile Include="Services\ICountryService.cs" />
     <Compile Include="Services\IEncryptionService.cs" />
     <Compile Include="Services\IUserService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\C-18-01-Capstone.Main\C-18-01-Capstone.Main.csproj">
-      <Project>{4DCDE8F6-8AD2-4F36-A0A5-584C9B68DC1F}</Project>
-      <Name>C-18-01-Capstone.Main</Name>
-    </ProjectReference>
+    <Compile Include="Services\CreateUserModel.cs" />
+    <Compile Include="Services\UserModel.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

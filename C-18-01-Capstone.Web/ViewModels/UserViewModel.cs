@@ -1,10 +1,5 @@
-﻿using C_18_01_Capstone.Main.DataContext;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
 
 namespace C_18_01_Capstone.Web.ViewModels
 {
@@ -21,5 +16,8 @@ namespace C_18_01_Capstone.Web.ViewModels
         public string Login { get; set; }
         
         public string Password { get; set; }
+
+        public IReadOnlyList<CountryViewModel> 
+            Countries { get; set; }
   }
 }

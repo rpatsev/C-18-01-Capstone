@@ -1,28 +1,30 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Web.Mvc;
-using C_18_01_Capstone.Main.DataAccessLayer;
-using C_18_01_Capstone.Main.DataContext;
-using C_18_01_Capstone.Services.Services;
+using C_18_01_Capstone.API.Contract;
 using C_18_01_Capstone.Web.ViewModels;
+using C_18_01_Capstone.Web.Services;
+using C_18_01_Capstone.Services.Services;
+using C_18_01_Capstone.Services;
 
 namespace C_18_01_Capstone.Web.Controllers
 {
     public class UserController : Controller
     {
+        private readonly IApiClient apiClient;
         private readonly IEncryptionService encryptionService;
-        private readonly IUserService userService;
-        
-        public UserController(
-            IEncryptionService encryptionService,
-            IUserService userService)
+
+        public UserController(IApiClient apiClient
+            , IEncryptionService encryptionService)
         {
+            this.apiClient = apiClient;
             this.encryptionService = encryptionService;
-            this.userService = userService;
         }
 
-        // GET: User
         [HttpGet]
+        [Authorize]
         public ActionResult Index()
         {
             return View();
@@ -35,80 +37,97 @@ namespace C_18_01_Capstone.Web.Controllers
         }
 
         [HttpGet]
-        public ActionResult Register()
+        public async Task<ActionResult> Register()
         {
             var userViewModel = new UserViewModel
             {
                 BirthDate = DateTime.Now,
-                CountryIso = "Ukrain",
                 FirstName = "Mihail",
                 LastName = "Ivanov",
                 Login = "loginName",
-                Password = "46672754"
+                Password = "46672754",
+                Countries = await this.GetCountries()
             };
-
-            var dataAccess = new EfDataAccess<Country>();
-
-            HtmlLists.Countries = dataAccess.GetEntities().OrderBy(_ => _.Name).ToList();
 
             return View(userViewModel);
         }
-        
-        [HttpPost]
-        public ActionResult Register(UserViewModel userViewModel)
-        {
-            if (ModelState.IsValid)
-            {
-                string salt = encryptionService.CreateSalt();
-                var user = new User
-                {
-                    Login = userViewModel.Login,
-                    BirthDate = userViewModel.BirthDate,
-                    FirstName = userViewModel.FirstName,
-                    LastName = userViewModel.LastName,
-                    CountryId = userViewModel.CountryIso,
-                    Salt = salt,
-                    HashedPassword = encryptionService
-                    .EncryptPassword(userViewModel.Password, salt),
-                };
 
-                userService.Add(user);
-            }
-            else
+        private bool TryParse(string value, out object result)
+        {
+            result = 10;
+
+            return true;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> Register(
+            UserViewModel userViewModel)
+        {
+            if (!ModelState.IsValid)
             {
                 throw new ApplicationException();
             }
 
-            return this.View();
+            var hasUserCreated = await this.apiClient
+                .CreateUser(this.Convert(userViewModel));
+
+            if (!hasUserCreated)
+            {
+                this.ModelState.AddModelError(
+                nameof(UserViewModel.Login),
+                "Something went wrong. Please, try again");
+            }            
+
+            return this.Login();
         }
 
         [HttpPost]
-        public ActionResult Login(LoginViewModel loginModel)
+        public async Task<ActionResult> Login(LoginViewModel loginModel)
         {
-            var user = this.userService
-                .FindUser(loginModel.Login);
-
-            if (user == null)
+            if (!ModelState.IsValid)
             {
-                this.ModelState.AddModelError(
-                    nameof(LoginViewModel.Login),
-                    "User not found");
-
-                return this.View();
+                throw new ApplicationException();
             }
 
-            if(this.encryptionService
-                .EncryptPassword(loginModel.Password, user.Salt)
-                 != user.HashedPassword)
-            {
-                this.ModelState.AddModelError(
-                    nameof(LoginViewModel.Password),
-                    "Password doesn't match");
+            UserModel user = await apiClient.GetUser(loginModel.Login);
 
-                return this.View();
+            string hashedPassword = encryptionService.EncryptPassword
+                (loginModel.Password, user.Salt);
+
+            if (user.HashedPassword.Equals(hashedPassword,
+                StringComparison.Ordinal))
+            {
+                RedirectToAction("Index");
             }
 
-            return this.Redirect("~/Home");
+            throw new ApplicationException();
+        }
+
+        private async Task<IReadOnlyList<CountryViewModel>> 
+            GetCountries()
+        {
+            return (await this.apiClient.GetCountries())
+                .Select(_ => new CountryViewModel
+                {
+                    CountryId = _.CountryId,
+                    Name = _.Name
+                })
+                .ToList()
+                .AsReadOnly();
+        }
+
+        private CreateUserApiModel Convert(
+            UserViewModel userViewModel)
+        {
+            return new CreateUserApiModel
+            {
+                Login = userViewModel.Login,
+                BirthDate = userViewModel.BirthDate,
+                FirstName = userViewModel.FirstName,
+                LastName = userViewModel.LastName,
+                CountryId = userViewModel.CountryIso,
+                Password = userViewModel.Password
+            };
         }
     }
 }
